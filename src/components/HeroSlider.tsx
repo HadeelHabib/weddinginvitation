@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { HERO_VIDEO_SRC } from "@/lib/assets";
+import { HERO_VIDEO_SRC, HERO_AUDIO_SRC } from "@/lib/assets";
 
 export default function HeroSlider() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [mounted, setMounted] = useState(false);
   const [videoStarted, setVideoStarted] = useState(false);
   const [videoFinished, setVideoFinished] = useState(false);
@@ -14,15 +15,38 @@ export default function HeroSlider() {
     return () => clearTimeout(boot);
   }, []);
 
+  const startAudio = () => {
+    const a = audioRef.current;
+    if (!a) return;
+    try {
+      a.volume = 0.65;
+      const p = a.play();
+      if (p && typeof p.then === "function") {
+        p.catch(() => {
+          /* browsers may block even gesture-init audio when tab not foreground — ignore */
+        });
+      }
+    } catch {
+      /* ignore */
+    }
+  };
+
   const startVideo = () => {
     if (videoStarted || videoFinished) return;
     const v = videoRef.current;
     if (!v) return;
     const p = v.play();
     if (p && typeof p.then === "function") {
-      p.then(() => setVideoStarted(true)).catch(() => setVideoStarted(true));
+      p.then(() => {
+        setVideoStarted(true);
+        startAudio();
+      }).catch(() => {
+        setVideoStarted(true);
+        startAudio();
+      });
     } else {
       setVideoStarted(true);
+      startAudio();
     }
   };
 
@@ -65,6 +89,19 @@ export default function HeroSlider() {
         <source src={HERO_VIDEO_SRC} type="video/quicktime" />
         <source src={HERO_VIDEO_SRC} type="video/mp4" />
       </video>
+
+      <audio
+        ref={audioRef}
+        preload="auto"
+        autoPlay={false}
+        loop
+        muted={false}
+        controls={false}
+        playsInline
+      >
+        <source src={HERO_AUDIO_SRC} type="audio/mp4" />
+        <source src={HERO_AUDIO_SRC} type="audio/aac" />
+      </audio>
 
       <div className="absolute inset-0 bg-paper-texture pointer-events-none" style={{ opacity: 0.35 }} />
       <div
@@ -274,7 +311,7 @@ export default function HeroSlider() {
             transition: "opacity 1s ease-out 1s",
           }}
         >
-          يتشرف السيد أجود جميل الشاعر بدعوتكم لحضور حفل زفاف ابنه
+         
         </p>
 
         <div
