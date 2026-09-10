@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 const navItems = [
   { id: "hero", label: "الرئيسية", icon: "🏠" },
   { id: "countdown", label: "العد التنازلي", icon: "⏳" },
-  { id: "timeline", label: "البرنامج", icon: "📋" },
   { id: "venue", label: "المكان", icon: "📍" },
   { id: "rsvp", label: "التأكيد", icon: "✉" },
 ];

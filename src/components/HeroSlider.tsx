@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { HERO_VIDEO_SRC, HERO_AUDIO_SRC } from "@/lib/assets";
 
-export default function HeroSlider() {
+export default function HeroSlider({ onOpen }: { onOpen?: () => void }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -33,8 +33,14 @@ export default function HeroSlider() {
 
   const startVideo = () => {
     if (videoStarted || videoFinished) return;
+    if (typeof onOpen === "function") {
+      try { onOpen(); } catch { /* ignore */ }
+    }
     const v = videoRef.current;
-    if (!v) return;
+    if (!v) {
+      setVideoStarted(true);
+      return;
+    }
     const p = v.play();
     if (p && typeof p.then === "function") {
       p.then(() => {

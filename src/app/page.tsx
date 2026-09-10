@@ -5,7 +5,6 @@ import HeroSlider from "@/components/HeroSlider";
 import BlessingSection from "@/components/BlessingSection";
 import InvitationCard from "@/components/InvitationCard";
 import CountdownTimer from "@/components/CountdownTimer";
-import Timeline from "@/components/Timeline";
 import VenueSection from "@/components/VenueSection";
 import SaveTheDate from "@/components/SaveTheDate";
 import RSVPForm from "@/components/RSVPForm";
@@ -16,6 +15,7 @@ import PetalOverlay from "@/components/PetalOverlay";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
+  const [opened, setOpened] = useState(false);
 
   useEffect(() => {
     const t = window.setTimeout(() => setMounted(true), 0);
@@ -29,25 +29,33 @@ export default function Home() {
   return (
     <main className="relative">
       <PetalOverlay />
-      <FloatingNav />
-      <HeroSlider />
-      <BlessingSection />
-      <InvitationCard />
-      <div id="countdown">
-        <CountdownTimer />
+      {opened && <FloatingNav />}
+      <HeroSlider onOpen={() => setOpened(true)} />
+      <div
+        style={{
+          opacity: opened ? 1 : 0,
+          transform: opened ? "translateY(0)" : "translateY(16px)",
+          transition: "opacity 0.6s cubic-bezier(0.22,1,0.36,1) 0.08s, transform 0.6s cubic-bezier(0.22,1,0.36,1) 0.08s",
+          pointerEvents: opened ? "auto" : "none",
+          overflow: opened ? "visible" : "hidden",
+        }}
+        aria-hidden={!opened}
+      >
+        <BlessingSection />
+        <InvitationCard />
+        <div id="countdown">
+          <CountdownTimer />
+        </div>
+        <div id="venue">
+          <VenueSection />
+        </div>
+        <SaveTheDate />
+        <div id="rsvp">
+          <RSVPForm />
+        </div>
+        <ContactSection />
+        <Footer />
       </div>
-      <div id="timeline">
-        <Timeline />
-      </div>
-      <div id="venue">
-        <VenueSection />
-      </div>
-      <SaveTheDate />
-      <div id="rsvp">
-        <RSVPForm />
-      </div>
-      <ContactSection />
-      <Footer />
     </main>
   );
 }
