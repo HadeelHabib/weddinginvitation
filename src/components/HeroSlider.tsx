@@ -7,6 +7,8 @@ export default function HeroSlider({ onOpen }: { onOpen?: () => void }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const startedRef = useRef(false);
+  const audioTriedRef = useRef(false);
+  const startAudioRef = useRef<((attempt?: number) => void) | null>(null);
   const [mounted, setMounted] = useState(false);
   const [videoStarted, setVideoStarted] = useState(false);
   const [videoFinished, setVideoFinished] = useState(false);
@@ -16,47 +18,95 @@ export default function HeroSlider({ onOpen }: { onOpen?: () => void }) {
     return () => clearTimeout(boot);
   }, []);
 
-  const startAudio = () => {
+  useEffect(() => {
+    const v = videoRef.current;
+    const a = audioRef.current;
+    try { if (v && typeof v.load === "function") v.load(); } catch { /* ignore */ }
+    try { if (a && typeof a.load === "function") a.load(); } catch { /* ignore */ }
+    try {
+      const AC: typeof AudioContext | undefined =
+        (window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext }).AudioContext ||
+        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (AC) {
+        const ctx = new AC();
+        ctx.resume().catch(() => undefined).finally(() => { void ctx.close().catch(() => undefined); });
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  const startAudio = useCallback((attempt: number = 0) => {
     const a = audioRef.current;
     if (!a) return;
+    if (audioTriedRef.current) return;
     try {
       a.volume = 0.65;
+      const reset = a.currentTime && a.currentTime > 0.001 ? 0 : a.currentTime;
+      if (reset === 0) try { a.currentTime = 0; } catch { /* ignore */ }
       const p = a.play();
       if (p && typeof p.then === "function") {
-        p.catch(() => {
-          /* browsers may block even gesture-init audio when tab not foreground — ignore */
+        p.then(() => {
+          audioTriedRef.current = true;
+        }).catch(() => {
+          if (attempt < 3) {
+            const wait = 140 + attempt * 180;
+            window.setTimeout(() => {
+              try {
+                const AC: typeof AudioContext | undefined =
+                  (window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext }).AudioContext ||
+                  (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+                if (AC) {
+                  const ctx = new AC();
+                  ctx.resume().catch(() => undefined).finally(() => { void ctx.close().catch(() => undefined); });
+                }
+              } catch { /* ignore */ }
+              const retry = startAudioRef.current;
+              if (retry) retry(attempt + 1);
+            }, wait);
+          } else {
+            audioTriedRef.current = true;
+          }
         });
+      } else {
+        audioTriedRef.current = true;
       }
     } catch {
-      /* ignore */
+      if (attempt < 3) {
+        window.setTimeout(() => {
+          const retry = startAudioRef.current;
+          if (retry) retry(attempt + 1);
+        }, 140 + attempt * 180);
+      } else {
+        audioTriedRef.current = true;
+      }
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    startAudioRef.current = startAudio;
+    return () => { startAudioRef.current = null; };
+  }, [startAudio]);
 
   const startVideo = useCallback(() => {
     if (startedRef.current) return;
     startedRef.current = true;
+    setVideoStarted(true);
     if (typeof onOpen === "function") {
       try { onOpen(); } catch { /* ignore */ }
     }
+    startAudio(0);
     const v = videoRef.current;
-    if (!v) {
-      setVideoStarted(true);
-      return;
+    if (!v) return;
+    try {
+      const p = v.play();
+      if (p && typeof p.then === "function") {
+        p.catch(() => {
+          try { v.muted = true; const p2 = v.play(); if (p2 && typeof p2.catch === "function") p2.catch(() => undefined); } catch { /* ignore */ }
+        });
+      }
+    } catch {
+      try { v.muted = true; const p2 = v.play(); if (p2 && typeof p2.catch === "function") p2.catch(() => undefined); } catch { /* ignore */ }
     }
-    const p = v.play();
-    if (p && typeof p.then === "function") {
-      p.then(() => {
-        setVideoStarted(true);
-        startAudio();
-      }).catch(() => {
-        setVideoStarted(true);
-        startAudio();
-      });
-    } else {
-      setVideoStarted(true);
-      startAudio();
-    }
-  }, [onOpen]);
+  }, [onOpen, startAudio]);
 
   const handleVideoEnded = () => {
     setVideoFinished(true);
