@@ -34,11 +34,12 @@ export default function FloatingNav() {
 
   return (
     <div
-      className="fixed z-40 left-1/2 -translate-x-1/2"
+      className="fixed z-40"
       style={{
         bottom: bottomOffset,
+        insetInlineEnd: "max(1.25rem, env(safe-area-inset-right))",
         opacity: visible ? 1 : 0,
-        transform: `translateX(-50%) ${visible ? "translateY(0)" : "translateY(120%)"}`,
+        transform: visible ? "translateY(0)" : "translateY(120%)",
         transition: "opacity 0.45s cubic-bezier(0.22,1,0.36,1), transform 0.45s cubic-bezier(0.22,1,0.36,1)",
         pointerEvents: visible ? "auto" : "none",
       }}
@@ -49,8 +50,7 @@ export default function FloatingNav() {
           style={{
             position: "absolute",
             bottom: `calc(${btnSize} + 0.85rem)`,
-            left: "50%",
-            transform: "translateX(-50%)",
+            insetInlineEnd: 0,
             padding: "0.5rem",
             borderRadius: "var(--radius-2xl)",
             minWidth: "min(80vw, 16rem)",

@@ -22,6 +22,44 @@ export default function Home() {
     return () => clearTimeout(t);
   }, []);
 
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+
+    if (!opened) {
+      const prevHtmlOverflow = html.style.overflow;
+      const prevHtmlHeight = html.style.height;
+      const prevHtmlOverscroll = html.style.overscrollBehavior as string | undefined;
+      const prevHtmlTouchAction = html.style.touchAction as string | undefined;
+      const prevBodyOverflow = body.style.overflow;
+      const prevBodyHeight = body.style.height;
+
+      html.style.overflow = "hidden";
+      html.style.height = "100%";
+      html.style.overscrollBehavior = "none";
+      html.style.touchAction = "none";
+      body.style.overflow = "hidden";
+      body.style.height = "100%";
+
+      return () => {
+        html.style.overflow = prevHtmlOverflow;
+        html.style.height = prevHtmlHeight;
+        html.style.overscrollBehavior = prevHtmlOverscroll ?? "";
+        html.style.touchAction = prevHtmlTouchAction ?? "";
+        body.style.overflow = prevBodyOverflow;
+        body.style.height = prevBodyHeight;
+      };
+    }
+
+    html.style.overflow = "";
+    html.style.height = "";
+    html.style.overscrollBehavior = "";
+    html.style.touchAction = "";
+    body.style.overflow = "";
+    body.style.height = "";
+    return undefined;
+  }, [opened]);
+
   if (!mounted) {
     return <div className="fixed inset-0" style={{ background: "#fdfaf0" }} />;
   }

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { HERO_VIDEO_SRC, HERO_AUDIO_SRC } from "@/lib/assets";
 
 export default function HeroSlider({ onOpen }: { onOpen?: () => void }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const startedRef = useRef(false);
   const [mounted, setMounted] = useState(false);
   const [videoStarted, setVideoStarted] = useState(false);
   const [videoFinished, setVideoFinished] = useState(false);
@@ -31,8 +32,9 @@ export default function HeroSlider({ onOpen }: { onOpen?: () => void }) {
     }
   };
 
-  const startVideo = () => {
-    if (videoStarted || videoFinished) return;
+  const startVideo = useCallback(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
     if (typeof onOpen === "function") {
       try { onOpen(); } catch { /* ignore */ }
     }
@@ -54,14 +56,61 @@ export default function HeroSlider({ onOpen }: { onOpen?: () => void }) {
       setVideoStarted(true);
       startAudio();
     }
-  };
+  }, [onOpen]);
 
   const handleVideoEnded = () => {
     setVideoFinished(true);
   };
 
   const reveal = mounted && videoFinished;
-  const showPlayPrompt = mounted && !videoStarted && !videoFinished;
+
+  useEffect(() => {
+    if (videoStarted) return undefined;
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      startVideo();
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      startVideo();
+    };
+    const onTouchStart = () => startVideo();
+    const onScroll = (e: Event) => {
+      e.preventDefault();
+      startVideo();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (
+        e.key === " " ||
+        e.key === "PageUp" ||
+        e.key === "PageDown" ||
+        e.key === "ArrowUp" ||
+        e.key === "ArrowDown" ||
+        e.key === "ArrowLeft" ||
+        e.key === "ArrowRight" ||
+        e.key === "Home" ||
+        e.key === "End"
+      ) {
+        e.preventDefault();
+        startVideo();
+      }
+    };
+
+    window.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("scroll", onScroll, { passive: false });
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    document.addEventListener("keydown", onKey);
+
+    return () => {
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchstart", onTouchStart);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [videoStarted, startVideo]);
 
   return (
     <section
@@ -76,7 +125,7 @@ export default function HeroSlider({ onOpen }: { onOpen?: () => void }) {
       }}
       role="button"
       tabIndex={0}
-      aria-label="اضغط لتشغيل فيديو الدعوة"
+      aria-label="تشغيل الدعوة"
     >
       <video
         ref={videoRef}
@@ -208,28 +257,6 @@ export default function HeroSlider({ onOpen }: { onOpen?: () => void }) {
           <circle cx="22" cy="22" r="2.5" fill="currentColor" opacity="0.7"/>
         </svg>
       </div>
-
-      {showPlayPrompt && (
-        <div
-          className="absolute inset-0 flex flex-col items-center justify-center z-[5] text-center px-[clamp(1rem,4vw,2rem)]"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? "translateY(0)" : "translateY(16px)",
-            transition: "opacity 0.9s ease-out 0.3s, transform 0.9s cubic-bezier(0.22,1,0.36,1) 0.3s",
-          }}
-        >
-          <p
-            className="text-cream-50 text-amiri font-bold"
-            style={{
-              fontSize: "clamp(1.5rem, 4vw, 2.5rem)",
-              textShadow: "0 2px 16px rgba(0,0,0,0.55), 0 0 28px rgba(212,164,55,0.25)",
-              animation: "pulseSoft 2.4s ease-in-out infinite",
-            }}
-          >
-            اضغط لفتح الدعوة
-          </p>
-        </div>
-      )}
 
       <div
         className="relative z-10 text-center px-[clamp(1rem,5vw,2rem)] max-w-[clamp(20rem,75vw,52rem)] mx-auto w-full pointer-events-none"

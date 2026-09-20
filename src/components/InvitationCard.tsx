@@ -61,36 +61,6 @@ export default function InvitationCard() {
           </p>
         </div>
       </SectionReveal>
-
-      <SectionReveal className="container-narrow mt-[clamp(2.5rem,7vw,4.5rem)]" delay={0.2}>
-        <div className="glass-gold text-center luxury-shadow luxury-shadow-hover card-lg card-inset-lg">
-          <div
-            className="mx-auto rounded-full flex items-center justify-center"
-            style={{
-              width: "clamp(2.75rem, 5vw, 3.5rem)",
-              height: "clamp(2.75rem, 5vw, 3.5rem)",
-              background: "linear-gradient(135deg, var(--color-gold-300), var(--color-gold-500))",
-            }}
-          >
-            <span className="text-cream-50" style={{ fontSize: "clamp(0.9rem, 1.8vw, 1.15rem)" }}>♔</span>
-          </div>
-          <p
-            className="text-gold-500 text-tajawal font-light"
-            style={{
-              fontSize: "clamp(0.7rem, 1.5vw, 0.8rem)",
-              letterSpacing: "0.2em",
-            }}
-          >
-            والد العريس
-          </p>
-          <p
-            className="gold-text-solid text-amiri font-bold leading-relaxed"
-            style={{ fontSize: "clamp(1rem, 2.2vw, 1.25rem)" }}
-          >
-            السيد أجود جميل الشاعر
-          </p>
-        </div>
-      </SectionReveal>
     </section>
   );
 }
